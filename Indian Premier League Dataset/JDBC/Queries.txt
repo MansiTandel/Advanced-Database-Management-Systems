@@ -1,0 +1,37 @@
+﻿#Show the contents of view- Player_bio (VIEW);
+select * from player_bio;
+#Show the contents of view- batsmen_stats (VIEW);
+select * from batsmen_stats;
+#Give the name of the batsmen who scored 6 runs facing a Left-arm medium-fast bowler(SUB-QUERY);
+Select player_name from players where player_id in(Select batsmen_id from deliveries where total_runs=6 and bowler_id in (Select player_id from players where bowling_skill='Left-arm medium-fast'));
+#List the players with their total runs and the no of batsmen scoring more runs than them(THETA-JOIN);
+with total_runs as (
+select batsmen_id, sum(total_runs) as runs from deliveries group by batsmen_id)
+select p.player_name, b.runs, count(distinct a.batsmen_id)-1 num_of_batsmen from total_runs a inner join total_runs b
+on a.runs>b.runs
+inner join players p on p.player_id = b.batsmen_id group by p.player_name, b.runs
+order by num_of_batsmen;
+#Give the batting hand and name of the players whose strike rate is <100 (INNER-JOIN);
+Select p.batting_hand, p.player_name from players p INNER JOIN batsmen_stats b ON p.player_name = b.player_name and b.strike_rate<100;
+#List out total number of Player of the match award won by every player(INNER-JOIN);
+select a.player_name,count(b.pom_id),b.pom_id from match b join players a on a.player_id = b.pom_id group by b.pom_id,a.player_name;
+#Player of the match of winning team for IPL-2017 season(TWO-WAY JOIN);
+Select p.player_name,t.team as winning_team from players p inner join match m on p.player_id=m.pom_id inner join teams t on m.winner=t.team_id where m.season='IPL-2017';
+#List out the player of the match from every ipl matches(THREE-WAY JOIN);
+SELECT a.PLAYER_NAME, b.season,c.team,a.country as player_country, d.venue from players a inner join match b on a.player_id=b.pom_id inner join teams c on b.winner =  c.team_id left join locations d on d.venue_id = b.venue_id order by b.season;
+#List down all allroudners who have ever batted and bowled both in the same match(SELF-JOIN);
+select distinct t.team, p.player_name from deliveries d1 inner join deliveries d2 on d2.match_id = d1.match_id
+and d1.batsmen_id = d2.bowler_id
+inner join teams t on t.team_id = d1.batting_team_id
+inner join players p on p.player_id = d1.batsmen_id
+order by player_name;
+#List out all the players and their details and the match id for which they have won the player of the match, return null for players who have never won player of the match(LEFT-JOIN);
+select a.player_name,b.season,a.batting_hand,a.bowling_skill,b.match_id,b.pom_id FROM players a LEFT JOIN match b ON a.player_id=b.pom_id  ORDER BY b.match_id;
+#List out the right handed batsmen who have won the player of the match award(RIGHT-JOIN);
+select m.match_id,p.player_name,p.batting_hand,m.pom_id FROM match m RIGHT JOIN players p ON p.player_id=m.pom_id WHERE p.batting_hand='Right_Hand';
+#Total score of teams played in â€˜IPL-2016â€™ season(SUM);
+select d.match_id,t.team,sum(d.total_runs) as total_runs from match m inner join deliveries d on m.match_id=d.match_id inner join teams t on t.team_id=d.Batting_team_id where m.season='IPL-2016' group by d.match_id,t.team order by d.match_id;
+#Team that have won the most number of matches(COUNT);
+Select * from (select t.team as team,count(i.winner) as matches_won from match i inner join teams t on i.winner=t.team_id group by t.team order by matches_won desc) res where rownum < 2;
+#List out player data in descending order according to player name(ORDER-BY);
+select * from players order by player_name desc;
